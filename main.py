@@ -11,6 +11,22 @@ from sklearn.neighbors import NearestNeighbors
 
 class Mlsmote():
     def __init__(self, data, labels, tail_list, n, k):
+        
+#         args:
+#         data : the input feature of data, which should be a ndarray, you can use np.array to transfer a list into ndarray
+#                the shape of this input should be (data_size, .......)
+#                which means the 1st dimesion of your input should be the number of your data instance
+#                for example:
+#                if it's a deep learning task, the 1st dimesion maybe the batch size    
+#                  [64, 3, 224, 224]
+#         labels : the labels for your input, should be a ndarray and data type needs to be int
+#                  the shape of this input should be (data_size, class_number)
+#         tail_list : a list, which contains several integers which indicates the tails class you chose
+#                     for example:
+#                     [1, 3, 5, 8]
+#         n : the nearest neighbours you want use when generating a new sample
+#         k : the number of new samples you want to generate with a single tail-class data instance
+
         super(Mlsmote, self).__init__()
 
         self.data = data
@@ -20,11 +36,16 @@ class Mlsmote():
         self.tail_list = tail_list
         self.neg_dict = {}
         self.cls_num = self.labels.shape[1]
+        
+        # create a dict to store the neighbour indices for datas in each tail class
 
         for label in tail_list:
             self.neg_dict[str(label)] = []
 
         print("self.N is {}".format(self.N))
+        
+        
+# get the indices of all instances within a certain class
         
     def getclassdata(self, class_):
         data_index = []
@@ -36,18 +57,25 @@ class Mlsmote():
                 data_index.append(i)
         return data_index
 
+# calculate the k-nearest-neighbour
+
     def knn(self):
         start_time = time.time()
 
         for class_ in self.tail_list:
+            # choose a class from tail classes
+            # get all the data and labels of this class
             data_index = self.getclassdata(class_)
             data_ = self.data[data_index]
             label_ = self.labels[data_index]
-
+            
+            # reshape the data, to fit the input of sklearn
             data_ = data_.reshape(data_.shape[0], -1)
 
             nbrs = NearestNeighbors(n_neighbors = self.K, algorithm = 'ball_tree') \
                 .fit(data_)
+            
+            # if return_distance is True, you can also get the distances between each data points
             indices = nbrs.kneighbors(data_, return_distance = False)
             
             self.neg_dict[str(class_)] =  indices
@@ -55,10 +83,13 @@ class Mlsmote():
         end_time = time.time()
 
         print("time total knn {}".format(end_time - start_time))
+        
+ # generating relevant labels for new sample
 
     def syn_label(self, ins_nn, data_index):
         syn_label = np.zeros((self.cls_num))
         for i in range(len(ins_nn)):
+            # ins_nn is list, which contains the index of nearest-neighbour of this sample
             ins_n_label = self.labels[data_index[ins_nn[i]]]
             syn_label += ins_n_label
         for i in range(self.cls_num):
@@ -93,7 +124,12 @@ class Mlsmote():
                     new_feature.append(new_ins_feature)
                     new_label.append(label_syn)
                     
-        new_feature = np.array(new_feature)
+        
+        new_shape = [-1]
+        for i in range(1, len(self.data.shape)):
+          new_shape.append(self.data.shape[i])
+
+        new_feature = np.array(new_feature).reshape(new_shape)
         new_label = np.array(new_label)
 
         data_wrap = np.concatenate((self.data, new_feature), axis = 0)

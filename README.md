@@ -1,6 +1,8 @@
 # MLSMOTE
 This is a test implementation for the python version of multi-label imbalanced learning algorithm MLSMOTE.
 
+Here is a very simple using example for the code.
+
 ```python
 data = np.random.rand(100, 100, 5)
 labels = np.random.randint(15, size=(100, 15))

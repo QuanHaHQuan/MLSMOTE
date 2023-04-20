@@ -76,6 +76,12 @@ class Mlsmote():
                 .fit(data_)
             
             # if return_distance is True, you can also get the distances between each data points
+            # this indices is not the direct index for the data
+            # for example
+            # if I chose class 3, and the data index is like:
+            # [3, 4, 15, 32, 111, ......] this is the indices of samples whose 3rd class is positive
+            # and the indices below maybe liks [1, 3, 5, 12, 34, .....]
+            # and indices[2] = 3, 3 means the 3rd samples in the data_, which shoule be data[15]
             indices = nbrs.kneighbors(data_, return_distance = False)
             
             self.neg_dict[str(class_)] =  indices

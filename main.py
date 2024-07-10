@@ -10,7 +10,7 @@ from sklearn.neighbors import NearestNeighbors
 
 
 class Mlsmote():
-    def __init__(self, data, labels, tail_list, n, k):
+    def __init__(self, data, labels, n, k):
         
 #         args:
 #         data : the input feature of data, which should be a ndarray, you can use np.array to transfer a list into ndarray
@@ -21,29 +21,47 @@ class Mlsmote():
 #                  [64, 3, 224, 224]
 #         labels : the labels for your input, should be a ndarray and data type needs to be int
 #                  the shape of this input should be (data_size, class_number)
-#         tail_list : a list, which contains several integers which indicates the tails class you chose
-#                     for example:
-#                     [1, 3, 5, 8]
 #         n : the nearest neighbours you want use when generating a new sample
 #         k : the number of new samples you want to generate with a single tail-class data instance
 
         super(Mlsmote, self).__init__()
 
         self.data = data
+        self.labels = labels
         self.N = n
         self.K = k
-        self.labels = labels
-        self.tail_list = tail_list
         self.neg_dict = {}
         self.cls_num = self.labels.shape[1]
         
+        self.tail_label = self.get_tail_label(self.labels)
+        
         # create a dict to store the neighbour indices for datas in each tail class
 
-        for label in tail_list:
+        for label in self.tail_label:
             self.neg_dict[str(label)] = []
 
         print("self.N is {}".format(self.N))
+        print("self.tail cls is {}".format(self.tail_label))
+
+
+    def get_tail_label(self, labels):
+    
+    # Give tail label colums of the given label
+    
+        irpl = np.zeros(self.cls_num)
         
+        for cls in range(self.cls_num):
+            irpl[cls] = sum(labels[:, cls])
+            print("cls : {} has {} samples".format(cls, irpl[cls]))
+
+        irpl = max(irpl)/irpl
+        mir = np.average(irpl)
+        tail_label = []
+
+        for i in range(self.cls_num):
+            if irpl[i] > mir:
+                tail_label.append(i)
+        return tail_label
         
 # get the indices of all instances within a certain class
         
@@ -62,7 +80,7 @@ class Mlsmote():
     def knn(self):
         start_time = time.time()
 
-        for class_ in self.tail_list:
+        for class_ in self.tail_label:
             # choose a class from tail classes
             # get all the data and labels of this class
             data_index = self.getclassdata(class_)
@@ -109,7 +127,7 @@ class Mlsmote():
         self.knn()
         new_feature = []
         new_label = []
-        for class_ in self.tail_list:
+        for class_ in self.tail_label:
             data_index = self.getclassdata(class_)
             data_ = self.data[data_index]
             label_ = self.labels[data_index]
@@ -132,8 +150,9 @@ class Mlsmote():
                     
         
         new_shape = [-1]
+        
         for i in range(1, len(self.data.shape)):
-          new_shape.append(self.data.shape[i])
+            new_shape.append(self.data.shape[i])
 
         new_feature = np.array(new_feature).reshape(new_shape)
         new_label = np.array(new_label)

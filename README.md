@@ -1,5 +1,5 @@
 # MLSMOTE
-This is a test implementation for the python version of multi-label imbalanced learning algorithm MLSMOTE.
+This is a test implementation for the python version of multi-label imbalanced learning algorithm Multi label Synthetic Minority Over-sampling Technique (MLSMOTE).
 
 Here is a very simple using example for the code.
 
